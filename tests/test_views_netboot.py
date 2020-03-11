@@ -225,7 +225,7 @@ class NetbootTest(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_ignition_cfg_no_runreq(self):
-        ignurl = "/netboot/ignition/%s" % self.DEVICE_1
+        ignurl = "/netboot/x86_64/ignition/%s" % self.DEVICE_1
         with self.loggedin_as():
             with self.claimed_device(self.DEVICE_1):
                 resp = self.client.get(ignurl)
@@ -241,7 +241,7 @@ class NetbootTest(TestCase):
             seenusers.add(userobj["name"])
 
     def test_ignition_cfg(self):
-        ignurl = "/netboot/ignition/%s" % self.DEVICE_1
+        ignurl = "/netboot/x86_64/ignition/%s" % self.DEVICE_1
         with self.loggedin_as():
             with self.claimed_device(self.DEVICE_1) as dev:
                 with self.device_with_runreq(dev, self.RUNREQ_INSTALLED):
@@ -255,7 +255,7 @@ class NetbootTest(TestCase):
                     )
 
     def test_ignition_cfg_with_keys(self):
-        ignurl = "/netboot/ignition/%s" % self.DEVICE_1
+        ignurl = "/netboot/x86_64/ignition/%s" % self.DEVICE_1
         with self.loggedin_as() as user:
             models.SSHKey(owner=user, key="mykeycontents").save()
 
