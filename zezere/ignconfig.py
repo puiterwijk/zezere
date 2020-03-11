@@ -90,6 +90,48 @@ class FileContents(IgnitionConfigObjectType):
         return cfg
 
 
+class FileOwner(AttributeIgnitionConfigObjectType):
+    id: int
+    name: str
+
+    def __init__(self, id: int, name: str):
+        self.id = id
+        self.name = name
+
+
+class File(IgnitionConfigObjectType):
+    path: str
+    overwrite: bool
+    mode: int
+    user: FileOwner
+    group: FileOwner
+    contents: FileContents
+    append: Optional[List[FileContents]]
+
+    def __init__(self, path: str, overwrite: bool, mode: int, user: FileOwner, group: FileOwner, contents: FileContents):
+        self.path = path
+        self.overwrite = overwrite
+        self.mode = mode
+        self.user = user
+        self.group = group
+        self.contents = contents
+        self.append = []
+
+    def add_append(self, contents: FileContents):
+        self.append.append(contents)
+
+    def generate_config(self) -> JSON:
+        return {
+            "path": self.path,
+            "overwrite": self.overwrite,
+            "mode": self.mode,
+            "user": self.user,
+            "group": self.group,
+            "contents": self.contents.generate_config(),
+            "append": self.recursive_generate_config(self.append),
+        }
+
+
 class PasswdUser(AttributeIgnitionConfigObjectType):
     name: str
     sshAuthorizedKeys: Optional[List[str]] = None
@@ -148,6 +190,7 @@ class IgnitionConfig(IgnitionConfigObjectType):
     users: List[PasswdUser]
     groups: List[PasswdGroup]
     config_merges: List[FileContents]
+    files: List[FileContents]
 
     def __init__(self):
         super()
@@ -155,6 +198,7 @@ class IgnitionConfig(IgnitionConfigObjectType):
         self.users = []
         self.groups = []
         self.config_merges = []
+        self.files = []
 
     def add_unit(self, unit: SystemdUnit):
         self.units.append(unit)
@@ -168,6 +212,9 @@ class IgnitionConfig(IgnitionConfigObjectType):
     def add_config_merge(self, config: FileContents):
         self.config_merges.append(config)
 
+    def add_file(self, file: FileContents):
+        self.files.append(file)
+
     def generate_config(self) -> JSON:
         return {
             "ignition": {
@@ -180,5 +227,8 @@ class IgnitionConfig(IgnitionConfigObjectType):
             "passwd": {
                 "users": self.recursive_generate_config(self.users),
                 "groups": self.recursive_generate_config(self.groups),
+            },
+            "storage": {
+                "files": self.recursive_generate_config(self.files),
             },
         }

@@ -17,6 +17,7 @@ import requests
 
 from ipware import get_client_ip
 
+from . import ignconfig
 from .models import Device, RunRequest
 from .runreqs import replace_device_strings
 
@@ -172,6 +173,44 @@ def kickstart(request, mac_addr):
     return render_for_device(
         device, request, "netboot/kickstart", context, content_type="text/plain"
     )
+
+
+def static_ignition_cfg(request):
+    config = ignconfig.IgnitionConfig()
+
+    zezere_ignition_service_unit = ignconfig.SystemdUnit("zezere-ignition.service")
+    zezere_ignition_service_unit.contents = """
+[Unit]
+Description=Run Ignition for Zezere
+
+[Service]
+Type=oneshot
+ExecStart=/opt/zezere_ignition.sh
+"""
+    zezere_ignition_timer_unit = ignconfig.SystemdUnit("zezere-ignition.timer")
+    zezere_ignition_timer_unit.enabled = True
+    zezere_ignition_timer_unit.contents = """
+[Unit]
+Description=Trigger Ignition for Zezere until it finishes
+
+[Timer]
+OnActiveSec=10sec
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
+"""
+
+    config.add_unit(zezere_ignition_service_unit)
+    config.add_unit(zezere_ignition_timer_unit)
+
+    # TODO: Add script to gather mac addr and arch and run ignition
+    zezere_ignition_script = ignconfig.FileContents(contents="""
+
+""")
+    config.add_file(zezere_ignition_script)
+
+    return JsonResponse(config.generate_config())
 
 
 def ignition_cfg(request, arch, mac_addr):
