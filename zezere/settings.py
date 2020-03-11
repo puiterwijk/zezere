@@ -84,6 +84,8 @@ for default_key in ("engine", "name", "user", "password", "host", "port"):
     if val:
         DATABASES["default"][default_key.upper()] = val
 
+print(DATABASES)
+
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
